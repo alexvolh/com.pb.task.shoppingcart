@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>shoppig cart</title>
+</h:head>
+
+<h:body>
+    <p:layout fullPage="true">
+        <p:layoutUnit position="north" size="120" collapsible="true" gutter="2">
+            SHOPPING CART
+        </p:layoutUnit>
+        <p:layoutUnit position="south" size="50" gutter="2"/>
+        <p:layoutUnit position="center">
+            <h:form id="ribbon_operation">
+                <p:ribbon>
+                    <p:tab title="Добавить новый">
+                        <p:ribbonGroup style="width: 20%">
+                        <h:form id="add_new_form">
+                            <p:commandButton id="btn_add" style="width: 120px;height: 50px"
+                                             value="Новый" icon="fa fa-plus-circle" onclick="PF('newPreorder').show();"/>
+                            <br/><br/><br/>
+                            <p:outputLabel style="float: left;font-size: small;font-weight: bold"
+                                           value="Добавить новый заказ"/>
+                        </h:form>
+                        </p:ribbonGroup>
+                    </p:tab>
+                    <p:tab title="Заказы за суммой">
+                        <p:ribbonGroup style="width: 57%;">
+                            <h:form id="input_sum_form">
+                            <p:outputLabel value="сумма:" for="sum"/> <p:inputText style="margin-left: 2%" id="sum" value="#{preorderBean.sumOfPreorderedLimit}"/>
+                            <p:outputLabel style="margin-left: 4%" value="количество:" for="quantity"/> <p:spinner style="margin-left: 2%" id="quantity"  value="#{preorderBean.quantityLimit}"/>
+
+                                <p:selectBooleanButton id="btn_accept1" style="float: right; margin-right: 50px;" onLabel="Сбросить" offLabel="Применить" value="#{preorderBean.filterPreorderBySum}">
+                                            <p:ajax process="@form" listener="#{preorderBean.getFilterPreorderBySum}" update="preorder_form shoppingcart_form sum quantity"/>
+                                </p:selectBooleanButton>
+                            <br/><br/>
+                            <p:outputLabel style="font-size: small;font-weight: bold" value="Вывести номера заказов, сумма которых не превосходит заданную, и количество различных товаров равно заданному"/>
+                            </h:form>
+                        </p:ribbonGroup>
+                    </p:tab>
+                    <p:tab title="Заказы за товаром">
+                        <p:ribbonGroup style="width: 37%">
+                            <h:form id="input_product_form">
+                                <p:outputLabel style="float: left" value="Выберете продукт (заказ содержит): " for="select_product"/>
+                                <p:selectOneMenu style="margin-left: 2%" id="select_product" value="#{preorderBean.selectedProduct}"
+                                                  converter="converter.ProductConverter" filter="true" filterMatchMode="contains">
+                                    <p:ajax event="valueChange" update="preorder_form shoppingcart_form"
+                                            listener="#{preorderBean.getFilterPreorderByContainsProduct}" />
+                                    <f:selectItems value="#{preorderBean.products}" var="product"
+                                                   itemLabel="#{product.name}"
+                                                   itemValue="#{product}"/>
+                                    <p:column>#{product.name}</p:column>
+                                </p:selectOneMenu>
+                                <div style="width: 100%;padding-top: 7% !important;">
+                                    <p:outputLabel style="float:left;" value="Количество заданного товара:" for="count_product"/>
+                                    <p:inputText id="count_product" style="width: 120px;float: left; margin-left: 2%" value="#{preorderBean.countAssignProduct}"/>
+                                    <p:commandButton style="margin-left: 6%; width: 120px" value="Удалить" process="@this count_product"
+                                                     actionListener="#{preorderBean.removePreordersWithAssignProduct}" update="preorder_form"/>
+                                </div>
+                                <div>
+                                    <p:outputLabel style="float: left;font-size: small;font-weight: bold"
+                                                   value="Вывести заказы, содержащиe заданный товар.Удалить заказ с заданным кол. товара"/>
+                                </div>
+                            </h:form>
+                        </p:ribbonGroup>
+                    </p:tab>
+                </p:ribbon>
+            </h:form>
+            <br/>
+            <p:fieldset legend="Заказы:" style="width: 25%;float: left;">
+                <h:form id="preorder_form">
+                    <p:dataTable id="preorder_datatable" value="#{preorderBean.preorders}" var="preorder" rowKey="#{preorder.id}"
+                    selectionMode="single" selection="#{preorderBean.selectedPreorder}" emptyMessage="Заказы не найдены">
+                        <p:ajax event="rowSelect" listener="#{preorderBean.setSelectedProducts}" update=":shoppingcart_form:shoppingcart_table"/>
+                        <p:column headerText="№ заказа">
+                            <h:outputText value="#{preorder.preorderNumber}"/>
+                        </p:column>
+                        <p:column headerText="Время">
+                            <h:outputText value="#{preorder.receiptDate}"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:fieldset>
+
+            <p:fieldset legend="Корзина:" style="width: 69%;float: right;">
+                <h:form id="shoppingcart_form">
+                    <p:dataTable id="shoppingcart_table" value="#{preorderBean.selectedProducts}" var="selproduct" rowKey="#{selproduct.id}" emptyMessage="Продукты не найдены">
+                        <f:facet name="header">
+                            <h:outputText value="товары"/>
+                        </f:facet>
+                        <p:column headerText="Название">
+                            <h:outputText value="#{selproduct.product.name}"/>
+                        </p:column>
+                        <p:column headerText="Цена">
+                            <h:outputText value="#{selproduct.product.price}"/>
+                        </p:column>
+                        <p:column headerText="Описание">
+                            <h:outputText value="#{selproduct.product.description}"/>
+                        </p:column>
+                        <p:column headerText="Количество">
+                            <h:outputText value="#{selproduct.quantity}"/>
+                        </p:column>
+                        <f:facet name="footer">
+                            <div style="height: 25px;padding-top: 10px;">
+                            <h:outputText style="padding-left: 65%;" value="Общая сумма: #{preorderBean.getDecimalFormatter(preorderBean.totalSum)}"/>
+                            </div>
+                        </f:facet>
+                    </p:dataTable>
+                </h:form>
+<!--                <h:form id="test_form">
+                    <h:outputText value="#{preorderBean.selectedProduct.name}"/>
+                </h:form>-->
+            </p:fieldset>
+        </p:layoutUnit>
+    </p:layout>
+    <p:dialog header="Добавить заказ" widgetVar="newPreorder" resizable="false" modal="true">
+        <h:form id="add_preorder_form">
+            <div style="width: 100%">
+                <p:outputLabel value="Введите номер заказа: " for="number_preorder"/>
+                <p:inputText id="number_preorder" style="width: 60%; float: right"  value="#{preorderBean.numberPreorder}" required="true"/>
+            </div>
+            <br/><br/>
+            <p:outputLabel value="Выберите продукты из списка: " />
+            <br/><br/>
+            <p:dataTable id="select_product" value="#{preorderBean.products}" var="product" rowKey="#{product.id}"
+                         editable="true" editMode="cell" widgetVar="productCell"
+                         selection="#{preorderBean.selectedProductsForPreorder}" resizableColumns="true" tableStyle="width: auto">
+                <f:facet name="header">
+                    продукты
+                </f:facet>
+                <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                <p:column headerText="Название">
+                    <h:outputText value="#{product.name}"/>
+                </p:column>
+                <p:column headerText="Стоимость">
+                    <h:outputText value="#{product.price}"/>
+                </p:column>
+                <p:column headerText="Описание">
+                    <h:outputText value="#{product.description}"/>
+                </p:column>
+                <p:column>
+                    <p:cellEditor>
+                        <f:facet name="output"><p:outputLabel value="#{product.quantityProduct}"/></f:facet>
+                        <f:facet name="input"><p:inputText value="#{product.quantityProduct}" label="quantity"/></f:facet>
+                    </p:cellEditor>
+                </p:column>
+            </p:dataTable>
+            <br/>
+            <div style="width: auto; text-align: center">
+                <p:commandButton value="Сформировать заказ" actionListener="#{preorderBean.addPreorder}"
+                                 process="@form" oncomplete="PF('newPreorder').hide()" update="preorder_form"/>
+            </div>
+            <br/>
+        </h:form>
+    </p:dialog>
+</h:body>
+
+</html>

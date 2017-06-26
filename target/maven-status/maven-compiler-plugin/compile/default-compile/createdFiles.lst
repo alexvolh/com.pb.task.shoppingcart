@@ -1,0 +1,5 @@
+model\PreorderToProduct.class
+beans\PreorderBean.class
+model\Product.class
+dao\PreorderDao.class
+model\Preorder.class
